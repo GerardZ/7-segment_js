@@ -2,6 +2,9 @@
 
 A (very) small js class to display a 7 segment display in a webpage. The display is svg based.
 
+
+![](assets/20251114_134957_7segments.png)
+
 **Features:**
 
 * number of digits
@@ -22,12 +25,13 @@ A (very) small js class to display a 7 segment display in a webpage. The display
    ```display4.displayNumber("00000314", [false, false, false, false, false, true, false, false]);```
 
 **Todo:**
+
 - Add clock separation dots
 - Add clock display config like clock4 & clock6, resp 00:00 and 00:00:00
 - Clean up class structure, use classes everywhere or attributes
 - upgrade dot construction, accept string with dot and someway to set a fixed dot position
 - colorschemes ?
-- dynamic scaling of segments based on digit size?
+- dynamic scaling of segments based on digit size or parent div?
 
 ### Why?
 

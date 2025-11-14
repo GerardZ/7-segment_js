@@ -18,14 +18,15 @@ A (very) small js class to display a 7 segment display in a webpage. The display
 
 1. include:
    ```<script src="7segment.js"></script>```
-2. instantiate:
+2. parentDiv in html:
+   ```<div id="display4"></div>```
+3. instantiate:
    ```const display4 = new SegmentDisplay("display4", 8, 25, "black", "darkgrey");```
-   ```constructor(parentId, digitCount = 4, scale = 1, bgColor = "#422", fgColor = "red")```
-3. set:
+4. set:
    ```display4.displayNumber("00000314", [false, false, false, false, false, true, false, false]);```
 
 **Todo:**
-
+- No leading zero`s
 - Add clock separation dots
 - Add clock display config like clock4 & clock6, resp 00:00 and 00:00:00
 - Clean up class structure, use classes everywhere or attributes

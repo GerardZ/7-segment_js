@@ -1,0 +1,43 @@
+
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Segment Display Class</title>
+
+    <script src="7segment.js"></script>
+</head>
+
+<body>
+
+    <h2>Multiple Segment Displays</h2>
+    <div id="display1" class="display-container"></div>
+
+    <div id="display2"></div>
+    <div id="display3"></div>
+    <div id="display4"></div>
+    <div id="display5"></div>
+    <div id="display6"></div>
+
+    <script>
+        const display1 = new SegmentDisplay("display1", 4);
+        const display2 = new SegmentDisplay("display2", 6, 5);
+        const display3 = new SegmentDisplay("display3", 2, 4);
+        const display4 = new SegmentDisplay("display4", 8, 25, "black", "darkgrey");
+        const display5 = new SegmentDisplay("display5", 10, 15, "#BDB", "#232");
+        const display6 = new SegmentDisplay("display6", 4, 10, "#999", "#111");
+
+        display1.displayNumber("2024", [false, false, true, false]); // dot after 2nd digit
+        display2.displayNumber("-12FF ");
+        display3.displayNumber("42");
+        display4.displayNumber("00000314", [false, false, false, false, false, true, false, false]);
+        display5.displayNumber("0123456789", [false, false, false, false, false, true, false, false]);
+        display6.displayNumber("1222");
+    </script>
+
+</body>
+
+</html>

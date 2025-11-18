@@ -73,6 +73,8 @@ const SEGMENT_SHAPES = {
     dot: "circle"
 };
 
+const minusSignShape = "0,8 6,8 6,10 0,10";
+
 const DIGIT_SEGMENTS = {
     "0": ["a", "b", "c", "d", "e", "f"],
     "1": ["b", "c"],
@@ -98,20 +100,40 @@ const DIGIT_SEGMENTS = {
 class SegmentDisplay {
     static nextId = 0;
 
-    constructor(parentId, digitCount = 4, scale = 1, bgColor = "#422", fgColor = "red") {
+    constructor(
+        parentId,
+        digits = 4,
+        scale = 1,
+        bgColor = "#422",
+        fgColor = "red"
+    ) {
+        this.isClockDisplay = false;
+
+        if (!isNaN(digits)) {
+            this.digitCount = digits;
+        }
+        else {
+            this.digitCount = 6;
+            this.isClockDisplay = true;
+        }
 
         this.digitWidth = 12; // in SVG units
+        this.clockSeparatorWidth = 8; // in SVG units
         this.digitHeight = 20; // in SVG units
+        this.defXOffset = 2; // in SVG units
+        this.defYOffset = 1; // in SVG units
 
         this.bgColor = bgColor
         this.fgColor = fgColor;
 
         this.parent = document.getElementById(parentId);
 
-        this.digitCount = digitCount;
         this.scale = scale;
 
-        this.width = digitCount * this.digitWidth * scale;
+        this.width = this.digitCount * this.digitWidth * scale;
+        if (this.isClockDisplay == true) {
+            this.width += this.clockSeparatorWidth * scale;
+        }
         this.height = this.digitHeight * scale;
 
 
@@ -138,11 +160,15 @@ class SegmentDisplay {
         .segOn {
             opacity: 1;
         }
+        .clockDot {}
+        .minusSign {}
         `;
         document.head.appendChild(style);
 
-        this.createStructure();
-        this.render();
+        //this.createStructure();
+        //this.render();
+
+        this.createDisplaySvg(this.parent, digits);
     }
 
     createDiv(id, className, width, height) {
@@ -175,13 +201,101 @@ class SegmentDisplay {
         this.container = container;
     }
 
+    createDisplaySvg(parent, format) {
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("viewBox", `0 0 ${this.width / this.scale} ${this.height / this.scale}`);
+        svg.style.background = this.bgColor;
 
+        const digits = "-00:00:00";
+        if (!isNaN(format)) {
+            format = '0'.repeat(format);
+        }
+
+        var i = 0;
+
+        var offset = this.defXOffset
+        //for (let i = 0; i < this.digitCount; i++) {
+        for (const char of format) {
+            if (!isNaN(char)) {
+                offset += this.createDigitGroup(svg, offset, i);
+                
+                i++;
+            }
+            else if (char === ":") {
+                offset += this.createClockSeparator(svg, offset, i);
+            }
+            else if (char === "-") {
+                offset += this.createMinusSign(svg, offset, i);
+            }
+
+
+        }
+
+        svg.setAttribute("viewBox", `0 0 ${offset} ${this.height / this.scale}`);
+
+        parent.appendChild(svg);
+    }
+
+
+    createMinusSign(ParentSvg, offset, id) {
+        const group = document.createElementNS(svgNS, "g");
+        group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
+        group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
+
+        //minusSignShape
+        let shape;
+        shape = document.createElementNS(svgNS, "polygon");
+        shape.setAttribute("points", minusSignShape);
+        shape.classList.add("minusSign");
+        shape.classList.add("segment");
+        group.appendChild(shape);
+        ParentSvg.appendChild(group);
+        return 7; // width in SVG units
+
+
+    }
+
+
+
+    createClockSeparator(ParentSvg, offset, id) {
+        const group = document.createElementNS(svgNS, "g");
+        group.setAttribute("transform", "skewX(-3)");
+        group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
+        group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
+
+        const dot1 = document.createElementNS(svgNS, "circle");
+        dot1.setAttribute("cx", 2);
+        dot1.setAttribute("cy", this.defYOffset + 4);
+        dot1.setAttribute("r", 1.2);
+        dot1.classList.add("clockDot");
+        dot1.classList.add("segment");
+        group.appendChild(dot1);
+
+        const dot2 = document.createElementNS(svgNS, "circle");
+        dot2.setAttribute("cx", 2);
+        dot2.setAttribute("cy", this.defYOffset + 12);
+        dot2.classList.add("clockDot");
+        dot2.setAttribute("r", 1.2);
+        dot2.classList.add("segment");
+        group.appendChild(dot2);
+
+        ParentSvg.appendChild(group);
+        return 5; // width in SVG units
+    }
+
+
+    
     render() {
         this.container.innerHTML = "";
         for (let i = 0; i < this.digitCount; i++) {
             this.container.appendChild(this.createDigitSvg(i));
+            //console.log(this.isClockDisplay, i);
+            if (this.isClockDisplay && i == 1) {        // add a separator after 2nd digit
+                this.container.appendChild(this.createClockSeparator(i));
+            }
         }
     }
+
 
     createDigitSvg(id) {
 
@@ -216,31 +330,34 @@ class SegmentDisplay {
         return svg;
     }
 
-    createClockSeperator(id) {
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("viewBox", "0 0 8 20");
-        svg.setAttribute("class", "digit");
-        svg.setAttribute("id", `digit-${this.containerId}-sep-${id}`);
+    createDigitGroup(ParentSvg, offset, id) {
 
         const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("transform", "skewX(-3)");
+        group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
 
-        shape = document.createElementNS(svgNS, "circle");
-        shape.setAttribute("cx", 3);
-        shape.setAttribute("cy", 5);
-        shape.setAttribute("r", 2);
-        group.appendChild(shape);
-        shape = document.createElementNS(svgNS, "circle");
-        shape.setAttribute("cx", 3);
-        shape.setAttribute("cy", 15);
-        shape.setAttribute("r", 2);
-        group.appendChild(shape);
+        for (const [name, points] of Object.entries(SEGMENT_SHAPES)) {
+            let shape;
+            if (name === "dot") {
+                shape = document.createElementNS(svgNS, "circle");
+                shape.setAttribute("cx", 11);
+                shape.setAttribute("cy", 17);
+                shape.setAttribute("r", 1);
+            } else {
+                shape = document.createElementNS(svgNS, "polygon");
+                shape.setAttribute("points", points);
+            }
+            console.log(`digit-${this.containerId}-${id}-seg-${name}`);
+            shape.setAttribute("id", `digit-${this.containerId}-${id}-seg-${name}`);
+            shape.setAttribute("class", "segment");
+            shape.setAttribute("fill", this.fgColor);
+            group.appendChild(shape);
+        }
 
-        svg.appendChild(group);
-        return svg;
+        ParentSvg.appendChild(group);
+        return this.digitWidth;
     }
+
 
     setDigit(index, value, showDot = false) {
         const onSegments = DIGIT_SEGMENTS[value] || [];
@@ -259,4 +376,19 @@ class SegmentDisplay {
             this.setDigit(idx, char, showDot);
         });
     }
+
+    setClockDots(state){
+        const dotElements = this.parent.querySelectorAll(".clockDot");
+        dotElements.forEach(dot => {
+            dot.classList.toggle("segOn", state);
+        });
+    }
+
+    setMinusSign(state){
+        const dotElements = this.parent.querySelectorAll(".minusSign");
+        dotElements.forEach(dot => {
+            dot.classList.toggle("segOn", state);
+        });
+    }
+    
 }

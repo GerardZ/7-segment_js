@@ -50,14 +50,14 @@
 */
 
 /* TODO:
-- Add clock separation dots
-- add clock display config like clock4 & clock6, resp 00:00 and 00:00:00
+- handle minus better
+- handle leading zeros better
+- size to parent container, beware of aspect ratio
 - Clean up class structure, use classes everywhere or attributes
 - upgrade dot construction, accept string with dot and someway to set a fixed dot position
 - colorschemes ?
 - dynamic scaling of segments based on digit size?
-
-
+- add bezel ?
 */
 
 globalThis.svgNS = "http://www.w3.org/2000/svg";
@@ -107,21 +107,16 @@ class SegmentDisplay {
         bgColor = "#422",
         fgColor = "red"
     ) {
-        this.isClockDisplay = false;
-
-        if (!isNaN(digits)) {
-            this.digitCount = digits;
-        }
-        else {
-            this.digitCount = 6;
-            this.isClockDisplay = true;
-        }
-
         this.digitWidth = 12; // in SVG units
         this.clockSeparatorWidth = 8; // in SVG units
         this.digitHeight = 20; // in SVG units
         this.defXOffset = 2; // in SVG units
         this.defYOffset = 1; // in SVG units
+        this.numberOfDigits = 0;
+
+        this.isClockDisplay = false;
+        this.hasMinusSign = false;
+
 
         this.bgColor = bgColor
         this.fgColor = fgColor;
@@ -142,7 +137,7 @@ class SegmentDisplay {
         this.wrapperId = `display-wrapper-${this.instanceId}`;
         this.containerId = `display-${this.instanceId}`;
 
-
+        // css classes 
         this.displayWrapperContainer = "width: fit-content; height: fit-content; padding-left: 4px; padding-right: 2px;";
         this.displayWrapper = "transform-origin: top left;";
         this.digitContainerClass = "display: flex;"
@@ -151,55 +146,21 @@ class SegmentDisplay {
         this.segment = "opacity: 0.1;"
         this.on = "opacity: 1;";
 
-        const style = document.createElement('style');      // we want everything in one file
+        
+        // Create style element in JS, we want everything in one file
+        // some classes are empty for now, but are used for selecting elements
+        const style = document.createElement('style');
         style.textContent = `
-        .segment {
-            opacity: 0.1;
-        }
-
-        .segOn {
-            opacity: 1;
-        }
+        .segment {   opacity: 0.1;}
+        .segOn {     opacity: 1;}
         .clockDot {}
         .minusSign {}
         `;
         document.head.appendChild(style);
 
-        //this.createStructure();
-        //this.render();
-
         this.createDisplaySvg(this.parent, digits);
     }
 
-    createDiv(id, className, width, height) {
-        const divEl = document.createElement("div");
-        if (id) divEl.id = id;
-        if (className) divEl.className = className;
-        if (width) divEl.style.width = width;
-        if (height) divEl.style.height = height;
-        return divEl;
-    }
-
-
-    createStructure() {
-        // Flowing container (one per display)
-        const wrapperContainer = this.createDiv(null, "display-wrapper-container", "fit-content", "fit-content");
-        wrapperContainer.style.background = this.bgColor;
-
-        // Scaled wrapper (now NOT absolute!)
-        const wrapper = this.createDiv(this.wrapperId, "display-wrapper", `${this.width}px`, `${this.height}px`);
-
-        // Digit container
-        const container = this.createDiv(this.containerId, "digit-container", `${this.width}px`, `${this.height}px`);
-        container.setAttribute("style", "display: flex;");
-
-        //container.style.display = "flex";
-        wrapper.appendChild(container);
-        wrapperContainer.appendChild(wrapper);
-        this.parent.appendChild(wrapperContainer);
-
-        this.container = container;
-    }
 
     createDisplaySvg(parent, format) {
         const svg = document.createElementNS(svgNS, "svg");
@@ -207,7 +168,8 @@ class SegmentDisplay {
         svg.style.background = this.bgColor;
 
         const digits = "-00:00:00";
-        if (!isNaN(format)) {
+        //if (!isNaN(format)) {
+        if (typeof format === "number") {
             format = '0'.repeat(format);
         }
 
@@ -218,7 +180,6 @@ class SegmentDisplay {
         for (const char of format) {
             if (!isNaN(char)) {
                 offset += this.createDigitGroup(svg, offset, i);
-                
                 i++;
             }
             else if (char === ":") {
@@ -227,8 +188,6 @@ class SegmentDisplay {
             else if (char === "-") {
                 offset += this.createMinusSign(svg, offset, i);
             }
-
-
         }
 
         svg.setAttribute("viewBox", `0 0 ${offset} ${this.height / this.scale}`);
@@ -236,26 +195,20 @@ class SegmentDisplay {
         parent.appendChild(svg);
     }
 
-
     createMinusSign(ParentSvg, offset, id) {
         const group = document.createElementNS(svgNS, "g");
         group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
 
-        //minusSignShape
-        let shape;
-        shape = document.createElementNS(svgNS, "polygon");
-        shape.setAttribute("points", minusSignShape);
-        shape.classList.add("minusSign");
-        shape.classList.add("segment");
-        group.appendChild(shape);
+        const minusSign = document.createElementNS(svgNS, "polygon");
+        minusSign.setAttribute("points", minusSignShape);
+        minusSign.classList.add("minusSign");
+        minusSign.classList.add("segment");
+        group.appendChild(minusSign);
         ParentSvg.appendChild(group);
+        this.hasMinusSign = true;
         return 7; // width in SVG units
-
-
     }
-
-
 
     createClockSeparator(ParentSvg, offset, id) {
         const group = document.createElementNS(svgNS, "g");
@@ -263,71 +216,18 @@ class SegmentDisplay {
         group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
 
-        const dot1 = document.createElementNS(svgNS, "circle");
-        dot1.setAttribute("cx", 2);
-        dot1.setAttribute("cy", this.defYOffset + 4);
-        dot1.setAttribute("r", 1.2);
-        dot1.classList.add("clockDot");
-        dot1.classList.add("segment");
-        group.appendChild(dot1);
-
-        const dot2 = document.createElementNS(svgNS, "circle");
-        dot2.setAttribute("cx", 2);
-        dot2.setAttribute("cy", this.defYOffset + 12);
-        dot2.classList.add("clockDot");
-        dot2.setAttribute("r", 1.2);
-        dot2.classList.add("segment");
-        group.appendChild(dot2);
+        for (let i = 0; i < 2; i++) {
+            const dot = document.createElementNS(svgNS, "circle");
+            dot.setAttribute("cx", 2);
+            dot.setAttribute("cy", this.defYOffset + 4 + i * 8);
+            dot.setAttribute("r", 1.2);
+            dot.classList.add("clockDot");
+            dot.classList.add("segment");
+            group.appendChild(dot);
+        }
 
         ParentSvg.appendChild(group);
         return 5; // width in SVG units
-    }
-
-
-    
-    render() {
-        this.container.innerHTML = "";
-        for (let i = 0; i < this.digitCount; i++) {
-            this.container.appendChild(this.createDigitSvg(i));
-            //console.log(this.isClockDisplay, i);
-            if (this.isClockDisplay && i == 1) {        // add a separator after 2nd digit
-                this.container.appendChild(this.createClockSeparator(i));
-            }
-        }
-    }
-
-
-    createDigitSvg(id) {
-
-        //const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("viewBox", "-1 -1 12 20");
-        svg.setAttribute("class", "digit");
-        svg.setAttribute("id", `digit-${this.containerId}-${id}`);
-
-        const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("transform", "skewX(-3)");
-        group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
-
-        for (const [name, points] of Object.entries(SEGMENT_SHAPES)) {
-            let shape;
-            if (name === "dot") {
-                shape = document.createElementNS(svgNS, "circle");
-                shape.setAttribute("cx", 11);
-                shape.setAttribute("cy", 17);
-                shape.setAttribute("r", 1);
-            } else {
-                shape = document.createElementNS(svgNS, "polygon");
-                shape.setAttribute("points", points);
-            }
-            shape.setAttribute("id", `digit-${this.containerId}-${id}-seg-${name}`);
-            shape.setAttribute("class", "segment");
-            shape.setAttribute("fill", this.fgColor);
-            group.appendChild(shape);
-        }
-
-        svg.appendChild(group);
-        return svg;
     }
 
     createDigitGroup(ParentSvg, offset, id) {
@@ -336,7 +236,7 @@ class SegmentDisplay {
         group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
 
-        for (const [name, points] of Object.entries(SEGMENT_SHAPES)) {
+        for (const [name, points] of Object.entries(SEGMENT_SHAPES)) {  // scans all elements of the 7-sement plus dot
             let shape;
             if (name === "dot") {
                 shape = document.createElementNS(svgNS, "circle");
@@ -347,7 +247,7 @@ class SegmentDisplay {
                 shape = document.createElementNS(svgNS, "polygon");
                 shape.setAttribute("points", points);
             }
-            console.log(`digit-${this.containerId}-${id}-seg-${name}`);
+            //console.log(`digit-${this.containerId}-${id}-seg-${name}`);
             shape.setAttribute("id", `digit-${this.containerId}-${id}-seg-${name}`);
             shape.setAttribute("class", "segment");
             shape.setAttribute("fill", this.fgColor);
@@ -355,6 +255,7 @@ class SegmentDisplay {
         }
 
         ParentSvg.appendChild(group);
+        this.numberOfDigits += 1;
         return this.digitWidth;
     }
 
@@ -377,18 +278,18 @@ class SegmentDisplay {
         });
     }
 
-    setClockDots(state){
+    setClockDots(state) {
         const dotElements = this.parent.querySelectorAll(".clockDot");
         dotElements.forEach(dot => {
             dot.classList.toggle("segOn", state);
         });
     }
 
-    setMinusSign(state){
+    setMinusSign(state) {
         const dotElements = this.parent.querySelectorAll(".minusSign");
         dotElements.forEach(dot => {
             dot.classList.toggle("segOn", state);
         });
     }
-    
+
 }

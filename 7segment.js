@@ -112,7 +112,8 @@ class SegmentDisplay {
         this.digitHeight = 20; // in SVG units
         this.defXOffset = 2; // in SVG units
         this.defYOffset = 1; // in SVG units
-        this.numberOfDigits = 0;
+    
+        this.numberOfDigits = this.cleanNumberString(this.numberToString(digits)).length;
 
         this.isClockDisplay = false;
         this.hasMinusSign = false;
@@ -131,7 +132,6 @@ class SegmentDisplay {
         }
         this.height = this.digitHeight * scale;
 
-
         this.instanceId = SegmentDisplay.nextId++;
 
         this.wrapperId = `display-wrapper-${this.instanceId}`;
@@ -146,7 +146,7 @@ class SegmentDisplay {
         this.segment = "opacity: 0.1;"
         this.on = "opacity: 1;";
 
-        
+
         // Create style element in JS, we want everything in one file
         // some classes are empty for now, but are used for selecting elements
         const style = document.createElement('style');
@@ -161,6 +161,16 @@ class SegmentDisplay {
         this.createDisplaySvg(this.parent, digits);
     }
 
+    numberToString(num) {
+        if (typeof num === "number") {
+            return ''.padStart(num, '0');
+        }
+        return num;
+    }
+
+    alignToRight(numStr) {
+       return numStr.padStart(this.numberOfDigits, ' ' );
+    }
 
     createDisplaySvg(parent, format) {
         const svg = document.createElementNS(svgNS, "svg");
@@ -255,7 +265,6 @@ class SegmentDisplay {
         }
 
         ParentSvg.appendChild(group);
-        this.numberOfDigits += 1;
         return this.digitWidth;
     }
 
@@ -271,12 +280,6 @@ class SegmentDisplay {
         }
     }
 
-    displayNumber(numStr, dots = []) {
-        [...numStr].forEach((char, idx) => {
-            const showDot = Array.isArray(dots) ? dots[idx] : false;
-            this.setDigit(idx, char, showDot);
-        });
-    }
 
     setClockDots(state) {
         const dotElements = this.parent.querySelectorAll(".clockDot");
@@ -289,6 +292,21 @@ class SegmentDisplay {
         const dotElements = this.parent.querySelectorAll(".minusSign");
         dotElements.forEach(dot => {
             dot.classList.toggle("segOn", state);
+        });
+    }
+
+    cleanNumberString(numStr) {
+        return numStr.toLowerCase().replace(/[^0-9a-f]/g, "");
+    }
+
+
+    displayNumber(numStr, dots = []) {
+
+        const cleanedAndAligned = this.alignToRight(this.cleanNumberString(numStr));
+
+        [...cleanedAndAligned].forEach((char, idx) => {
+            const showDot = Array.isArray(dots) ? dots[idx] : false;
+            this.setDigit(idx, char, showDot);
         });
     }
 

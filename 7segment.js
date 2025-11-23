@@ -50,13 +50,9 @@
 */
 
 /* TODO:
-- handle minus better
-- handle leading zeros better
-- size to parent container, beware of aspect ratio
-- Clean up class structure, use classes everywhere or attributes
+- resolve scaling
 - upgrade dot construction, accept string with dot and someway to set a fixed dot position
 - colorschemes ?
-- dynamic scaling of segments based on digit size?
 - add bezel ?
 */
 
@@ -171,6 +167,7 @@ class SegmentDisplay {
     alignToRight(numStr) {
        return numStr.padStart(this.numberOfDigits, ' ' );
     }
+
 
     createDisplaySvg(parent, format) {
         const svg = document.createElementNS(svgNS, "svg");
@@ -296,7 +293,7 @@ class SegmentDisplay {
     }
 
     cleanNumberString(numStr) {
-        return numStr.toLowerCase().replace(/[^0-9a-f]/g, "");
+        return numStr.toUpperCase().replace(/[^0-9A-F]/g, "");
     }
 
 

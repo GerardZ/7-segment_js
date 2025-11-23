@@ -51,6 +51,7 @@
 
 /* TODO:
 - resolve scaling
+- resolve dot positioning
 - upgrade dot construction, accept string with dot and someway to set a fixed dot position
 - colorschemes ?
 - add bezel ?
@@ -58,43 +59,44 @@
 
 globalThis.svgNS = "http://www.w3.org/2000/svg";
 
-const SEGMENT_SHAPES = {
-    a: "1,1 2,0 8,0 9,1 8,2 2,2",
-    b: "9,1 10,2 10,8 9,9 8,8 8,2",
-    c: "9,9 10,10 10,16 9,17 8,16 8,10",
-    d: "9,17 8,18 2,18 1,17 2,16 8,16",
-    e: "1,17 0,16 0,10 1,9 2,10 2,16",
-    f: "1,9 0,8 0,2 1,1 2,2 2,8",
-    g: "1,9 2,8 8,8 9,9 8,10 2,10",
-    dot: "circle"
-};
-
-const minusSignShape = "0,8 6,8 6,10 0,10";
-
-const DIGIT_SEGMENTS = {
-    "0": ["a", "b", "c", "d", "e", "f"],
-    "1": ["b", "c"],
-    "2": ["a", "b", "g", "e", "d"],
-    "3": ["a", "b", "c", "d", "g"],
-    "4": ["f", "g", "b", "c"],
-    "5": ["a", "f", "g", "c", "d"],
-    "6": ["a", "f", "e", "d", "c", "g"],
-    "7": ["a", "b", "c"],
-    "8": ["a", "b", "c", "d", "e", "f", "g"],
-    "9": ["a", "b", "c", "d", "f", "g"],
-    "-": ["g"],
-    " ": [],
-    "A": ["a", "b", "c", "e", "f", "g"],
-    "B": ["f", "e", "d", "c", "g"],
-    "C": ["a", "f", "e", "d"],
-    "D": ["b", "c", "d", "e", "g"],
-    "E": ["a", "f", "e", "d", "g"],
-    "F": ["a", "f", "e", "g"]
-};
 
 // ✅ The Class
 class SegmentDisplay {
     static nextId = 0;
+
+    static minusSignShape = "0,8 6,8 6,10 0,10";
+
+    static SEGMENT_SHAPES = {
+        a: "1,1 2,0 8,0 9,1 8,2 2,2",
+        b: "9,1 10,2 10,8 9,9 8,8 8,2",
+        c: "9,9 10,10 10,16 9,17 8,16 8,10",
+        d: "9,17 8,18 2,18 1,17 2,16 8,16",
+        e: "1,17 0,16 0,10 1,9 2,10 2,16",
+        f: "1,9 0,8 0,2 1,1 2,2 2,8",
+        g: "1,9 2,8 8,8 9,9 8,10 2,10",
+        dot: "circle"
+    };
+
+    static DIGIT_SEGMENTS = {
+        "0": ["a", "b", "c", "d", "e", "f"],
+        "1": ["b", "c"],
+        "2": ["a", "b", "g", "e", "d"],
+        "3": ["a", "b", "c", "d", "g"],
+        "4": ["f", "g", "b", "c"],
+        "5": ["a", "f", "g", "c", "d"],
+        "6": ["a", "f", "e", "d", "c", "g"],
+        "7": ["a", "b", "c"],
+        "8": ["a", "b", "c", "d", "e", "f", "g"],
+        "9": ["a", "b", "c", "d", "f", "g"],
+        "-": ["g"],
+        " ": [],
+        "A": ["a", "b", "c", "e", "f", "g"],
+        "B": ["f", "e", "d", "c", "g"],
+        "C": ["a", "f", "e", "d"],
+        "D": ["b", "c", "d", "e", "g"],
+        "E": ["a", "f", "e", "d", "g"],
+        "F": ["a", "f", "e", "g"]
+    };
 
     constructor(
         parentId,
@@ -108,7 +110,7 @@ class SegmentDisplay {
         this.digitHeight = 20; // in SVG units
         this.defXOffset = 2; // in SVG units
         this.defYOffset = 1; // in SVG units
-    
+
         this.numberOfDigits = this.cleanNumberString(this.numberToString(digits)).length;
 
         this.isClockDisplay = false;
@@ -165,7 +167,7 @@ class SegmentDisplay {
     }
 
     alignToRight(numStr) {
-       return numStr.padStart(this.numberOfDigits, ' ' );
+        return numStr.padStart(this.numberOfDigits, ' ');
     }
 
 
@@ -208,7 +210,7 @@ class SegmentDisplay {
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
 
         const minusSign = document.createElementNS(svgNS, "polygon");
-        minusSign.setAttribute("points", minusSignShape);
+        minusSign.setAttribute("points", SegmentDisplay.minusSignShape);
         minusSign.classList.add("minusSign");
         minusSign.classList.add("segment");
         group.appendChild(minusSign);
@@ -243,7 +245,7 @@ class SegmentDisplay {
         group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
 
-        for (const [name, points] of Object.entries(SEGMENT_SHAPES)) {  // scans all elements of the 7-sement plus dot
+        for (const [name, points] of Object.entries(SegmentDisplay.SEGMENT_SHAPES)) {  // scans all elements of the 7-sement plus dot
             let shape;
             if (name === "dot") {
                 shape = document.createElementNS(svgNS, "circle");
@@ -267,8 +269,8 @@ class SegmentDisplay {
 
 
     setDigit(index, value, showDot = false) {
-        const onSegments = DIGIT_SEGMENTS[value] || [];
-        const allSegs = Object.keys(SEGMENT_SHAPES);
+        const onSegments = SegmentDisplay.DIGIT_SEGMENTS[value] || [];
+        const allSegs = Object.keys(SegmentDisplay.SEGMENT_SHAPES);
         for (const seg of allSegs) {
             const el = document.getElementById(`digit-${this.containerId}-${index}-seg-${seg}`);
             if (!el) continue;

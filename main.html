@@ -39,14 +39,11 @@
         display6.displayNumber("-12");
         display6.setMinusSign(true);
 
-        //clock1.displayNumber("123456");
-        //clock1.setClockDots(true);
-
-        // for demonstration of the clock display:
+        //#region for demonstration of the clock display:
         const clock1Timer = new ClockTimer(secondTickAction, halfSecondAction);
 
         function getTimeHHMMSS(now) {
-            const hh = String(now.getHours()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, ' ');
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             return `${hh}${mm}${ss}`;
@@ -60,9 +57,8 @@
             clock1.setClockDots(false);
         }
 
-
         clock1Timer.start();
-
+        //#endregion
 
 
     </script>

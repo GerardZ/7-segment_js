@@ -7,6 +7,7 @@
     <title>Segment Display Class</title>
 
     <script src="7segment.js"></script>
+    <script src="ClockTimer.js"></script>
 </head>
 
 <body>
@@ -35,70 +36,34 @@
         //display3.displayNumber("42");
         //display4.displayNumber("00000314", [false, false, false, false, false, true, false, false]);
         //display5.displayNumber("0123456789", [false, false, false, false, false, true, false, false]);
-        display6.displayNumber("-122");
+        display6.displayNumber("-12");
         display6.setMinusSign(true);
-        
+
         //clock1.displayNumber("123456");
         //clock1.setClockDots(true);
-        
-        //#region Clock Timer Functions
-        // clock timer functions, updates every second and calls halfway function at half second
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
 
-        function getTimeHHMMSS() {
-            const now = new Date();
+        // for demonstration of the clock display:
+        const clock1Timer = new ClockTimer(secondTickAction, halfSecondAction);
+
+        function getTimeHHMMSS(now) {
             const hh = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             return `${hh}${mm}${ss}`;
         }
 
-        function sleepWithHalfway(ms, onHalfway) {
-            return new Promise(resolve => {
-                const halfway = ms / 2;
-
-                setTimeout(() => {
-                    if (typeof onHalfway === "function") {
-                        onHalfway();
-                    }
-                }, halfway);
-
-                setTimeout(() => {
-                    resolve();
-                }, ms);
-            });
+        function secondTickAction(now) {
+            clock1.displayNumber(getTimeHHMMSS(now));
+            clock1.setClockDots(true);
+        }
+        function halfSecondAction(now) {
+            clock1.setClockDots(false);
         }
 
-        async function startClock() {
-            let lastSecond = null;
 
-            while (true) {
-                const now = new Date();
-                const currentSecond = now.getSeconds();
+        clock1Timer.start();
 
-                if (currentSecond !== lastSecond) {
-                    lastSecond = currentSecond;
 
-                    // 🕒 Do your update here
-                    console.log(now.toLocaleTimeString());
-                    clock1.displayNumber(getTimeHHMMSS());
-                    clock1.setClockDots(true);
-                    await sleepWithHalfway(1000, () => {
-                        console.log("↪ Half-second mark...");
-                        clock1.setClockDots(false);
-                    });
-                }
-
-                await sleep(100); // Poll every 100ms
-            }
-        }
-        // init the clock
-        startClock();
-        // end clock timer functions
-
-        //#endregion
 
     </script>
 

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+        }
+
+        #popup {
+            display: none;
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -30%);
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #popup.show {
+            display: block;
+        }
+
+        .form-field {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>ESP8266 Settings</h2>
+    <button onclick="showPopup()">Configure</button>
+
+    <div id="popup">
+        <h3>Settings</h3>
+        <form id="settingsForm" onsubmit="submitSettings(event)">
+            <!-- Fields go here -->
+            <div id="formFields"></div>
+            <button type="submit">Save</button>
+            <button type="button" onclick="hidePopup()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+        const fields = [
+            { name: "devicename", type: "text", required: true },
+            { name: "ssid", type: "text", required: true },
+            { name: "password", type: "password", required: false },
+            { name: "temp", type: "text", required: true }
+        ];
+
+        function generateForm() {
+            const formFields = document.getElementById('formFields');
+            formFields.innerHTML = ''; // Clear before regenerating
+
+            fields.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'form-field';
+
+                const label = document.createElement('label');
+                label.innerText = `${field.name}:`;
+                const input = document.createElement('input');
+                input.type = field.type;
+                input.name = field.name;
+                if (field.required) input.required = true;
+
+                label.appendChild(document.createElement('br'));
+                label.appendChild(input);
+                wrapper.appendChild(label);
+                formFields.appendChild(wrapper);
+            });
+        }
+
+        function showPopup() {
+            generateForm();
+            document.getElementById('popup').classList.add('show');
+        }
+
+        function hidePopup() {
+            document.getElementById('popup').classList.remove('show');
+        }
+
+        function submitSettings2(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            fetch('/settings', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            }).then(res => res.text())
+                .then(msg => alert(msg))
+                .catch(err => alert("Error: " + err));
+
+            hidePopup();
+        }
+
+        function submitSettings(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const data = {};
+
+            for (const field of form.elements) {
+                if (field.name) {
+                    data[field.name] = field.type === 'checkbox' ? field.checked : field.value;
+                }
+            }
+
+            send(data); // Your custom function gets the full JSON
+            hidePopup();
+        }
+
+        function send(data) {
+            console.log("Sending JSON:", JSON.stringify(data));
+            return;
+            fetch('/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.text())
+                .then(msg => alert(msg))
+                .catch(err => alert("Error: " + err));
+        }
+    </script>
+
+</body>
+
+</html>

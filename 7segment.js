@@ -62,6 +62,7 @@ globalThis.svgNS = "http://www.w3.org/2000/svg";
 
 // ✅ The Class
 class SegmentDisplay {
+
     static nextId = 0;
 
     static minusSignShape = "0,8 6,8 6,10 0,10";
@@ -170,32 +171,28 @@ class SegmentDisplay {
         return numStr.padStart(this.numberOfDigits, ' ');
     }
 
-
     createDisplaySvg(parent, format) {
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("viewBox", `0 0 ${this.width / this.scale} ${this.height / this.scale}`);
         svg.style.background = this.bgColor;
 
-        const digits = "-00:00:00";
-        //if (!isNaN(format)) {
         if (typeof format === "number") {
             format = '0'.repeat(format);
         }
 
         var i = 0;
-
         var offset = this.defXOffset
-        //for (let i = 0; i < this.digitCount; i++) {
+        
         for (const char of format) {
             if (!isNaN(char)) {
                 offset += this.createDigitGroup(svg, offset, i);
                 i++;
             }
             else if (char === ":") {
-                offset += this.createClockSeparator(svg, offset, i);
+                offset += this.createClockSeparator(svg, offset);
             }
             else if (char === "-") {
-                offset += this.createMinusSign(svg, offset, i);
+                offset += this.createMinusSign(svg, offset);
             }
         }
 
@@ -204,7 +201,7 @@ class SegmentDisplay {
         parent.appendChild(svg);
     }
 
-    createMinusSign(ParentSvg, offset, id) {
+    createMinusSign(ParentSvg, offset) {
         const group = document.createElementNS(svgNS, "g");
         group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
         group.setAttribute("style", `fill-rule:evenodd; stroke:${this.bgColor}; stroke-width:0.5; stroke-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;`);
@@ -219,7 +216,7 @@ class SegmentDisplay {
         return 7; // width in SVG units
     }
 
-    createClockSeparator(ParentSvg, offset, id) {
+    createClockSeparator(ParentSvg, offset) {
         const group = document.createElementNS(svgNS, "g");
         group.setAttribute("transform", "skewX(-3)");
         group.setAttribute("transform", `skewX(-3) translate(${offset}, ${this.defYOffset})`);
@@ -302,6 +299,7 @@ class SegmentDisplay {
     displayNumber(numStr, dots = []) {
 
         const cleanedAndAligned = this.alignToRight(this.cleanNumberString(numStr));
+        // FIXME handle dot
 
         [...cleanedAndAligned].forEach((char, idx) => {
             const showDot = Array.isArray(dots) ? dots[idx] : false;

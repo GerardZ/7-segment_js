@@ -7,6 +7,15 @@ class ConfigModal {
 
         this._createModalStructure();
         this._injectStyles();
+        this.createBackdrop();
+    }
+
+    createBackdrop(){
+        var backdrop = document.querySelector(".modal-backdrop") 
+        if (backdrop) return; // already exists
+        backdrop = document.createElement("div"); 
+        backdrop.className = "modal-backdrop";
+        document.body.appendChild(backdrop);
     }
 
     _createModalStructure() {
@@ -28,6 +37,8 @@ class ConfigModal {
 
         this.form.onsubmit = this.submitSettings.bind(this);
         this.cancelBtn.onclick = () => this.hide();
+
+        //this.createBackdrop();
     }
 
     _injectStyles() {
@@ -52,6 +63,24 @@ class ConfigModal {
     .modal.show {
         display: block;
     }
+
+    .modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.1); /* light transparent layer */
+    backdrop-filter: blur(8px);           /* apply blur */
+    -webkit-backdrop-filter: blur(8px);   /* for Safari */
+    z-index: 999;
+}
+
+.modal-backdrop.show {
+    display: block;
+}
+
 
 .form-field {
     display: flex;
@@ -129,7 +158,10 @@ class ConfigModal {
                 input.name = field.name;
                 input.id = field.name;
                 if (field.required) input.required = true;
-                if( field.pattern) input.pattern = field.pattern;
+                if (field.pattern) input.pattern = field.pattern;
+                if (field.validityMessage) {
+                    this.addCustomValidation(input, field.validityMessage);
+                }
             }
 
             input.id = field.name;
@@ -141,13 +173,27 @@ class ConfigModal {
         });
     }
 
+    addCustomValidation(input, message) {
+        input.addEventListener("invalid", () => {
+            input.setCustomValidity(message);
+        });
+
+        input.addEventListener("input", () => {
+            input.setCustomValidity("");
+        });
+
+
+    }
+
     show() {
         this.generateForm();
         this.modal.classList.add("show");
+        document.querySelector(".modal-backdrop").classList.add("show");
     }
 
     hide() {
         this.modal.classList.remove("show");
+        document.querySelector(".modal-backdrop").classList.remove("show");
     }
 
     submitSettings(e) {

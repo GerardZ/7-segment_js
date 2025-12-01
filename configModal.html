@@ -12,22 +12,23 @@
     <h2>ESP8266 Settings</h2>
     <button onclick="modal.show();">Configure</button>
     <div id="modalContainer"></div>
+    
 
 
     <script>
         const fields = [
             { name: "devicename", type: "text", required: true },
-            { name: "ZIP", type: "text", pattern: "^\d{4}[A-Z]{2}$", required: true },
+            { name: "ZIP", type: "text", pattern: "^\\d{4}[A-Za-z]{2}$", validityMessage:"please use 0000AA pattern.",required: true },
             { name: "ssid", type: "text", required: true },
             { name: "password", type: "password", required: false },
             { name: "pause", type: "checkbox", required: false },
             { name: "mode", type: "select", options: ["aa", "bb", "cc"] },
             { name: "power", type: "radio", options: ["low", "medium", "high"], value: "medium" },
-            { name: "temp", type: "text", required: true }
+            { name: "temp", type: "text", required: false }
         ];
 
         // make sure modal is globally accessible for use in button modal.show():
-        window.modal = new ConfigModal("modalContainer", "my Settings", fields, send);
+        window.modal = new ConfigModal("modalContainer", "the Settings", fields, send);
 
         function send(data) {
             console.log("Sending JSON:", JSON.stringify(data));
